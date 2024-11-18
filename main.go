@@ -2,34 +2,55 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"coupons-management/api"
+	"coupons-management/db"
 )
 
 func main() {
+	mongoEndpoint := "mongodb://localhost:27017"
+	dbName := "coupons-management"
+	store, err := NewStore(mongoEndpoint, dbName)
+	if err != nil {
+		log.Fatalf("Failed to create store: %v", err)
+	}
+
 	app := fiber.New()
 
-	mongoEndpoint := "mongodb://localhost:27017"
-	clientOptions := options.Client().ApplyURI(mongoEndpoint)
+	couponHandler := api.NewCouponHandler(*store)
 
-	client, err := mongo.Connect(context.Background(), clientOptions)
-	if err != nil {
-		fmt.Println("Failed to connect to MongoDB:", err)
-		os.Exit(1)
-	}
-
-	err = client.Ping(context.Background(), nil)
-	if err != nil {
-		fmt.Println("MongoDB connection test failed:", err)
-		os.Exit(1)
-	}
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, Fiber with MongoDB!")
-	})
+	// Define your routes
+	app.Get("/coupons/:id", couponHandler.HandleGetCoupon)
+	app.Get("/coupons", couponHandler.HandleGetAllCoupons)
+	app.Post("/coupons", couponHandler.HandleCreateCoupon)
+	app.Put("/coupons/:id", couponHandler.HandleUpdateCoupon)
+	app.Delete("/coupons/:id", couponHandler.HandleDeleteCoupon)
 
 	app.Listen(":2121")
 }
+
+func NewStore(mongoURI string, dbName string) (*db.Store, error) {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(mongoURI))
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+		return nil, err
+	}
+
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Fatalf("Failed to ping MongoDB: %v", err)
+		return nil, err
+	}
+
+	store := &db.Store{
+		Coupon: db.NewCouponStore(client, dbName),
+	}
+
+	return store, nil
+}
+
