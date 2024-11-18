@@ -31,6 +31,9 @@ func main() {
 	app.Put("/coupons/:id", couponHandler.HandleUpdateCoupon)
 	app.Delete("/coupons/:id", couponHandler.HandleDeleteCoupon)
 
+	app.Post("/applicable-coupons", couponHandler.HandleGetApplicableCoupons)
+	app.Post("/apply-coupon/:id", couponHandler.HandleApplyCoupon)
+
 	app.Listen(":2121")
 }
 

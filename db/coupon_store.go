@@ -20,6 +20,7 @@ type CouponStore interface {
 	CreateCoupon(ctx context.Context, coupon types.CreateCouponParams) (*types.Coupon, error)
 	UpdateCoupon(ctx context.Context, couponID string, coupon types.UpdateCouponParams) error
 	DeleteCoupon(ctx context.Context, couponID string) error
+	GetCouponsByType(ctx context.Context, couponID string) ([]types.Coupon, error)
 }
 
 func NewCouponStore(client *mongo.Client, dbName string) CouponStore {
@@ -77,7 +78,27 @@ func (s *MongoCouponStore) GetAllCoupons(ctx context.Context) ([]types.Coupon, e
 
 	return coupons, nil
 }
+func (s *MongoCouponStore) GetCouponsByType(ctx context.Context, couponType string) ([]types.Coupon, error) {
+	collection := s.client.Database(s.dbName).Collection("coupons")
+	filter := bson.M{"type": couponType}
 
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var coupons []types.Coupon
+	for cursor.Next(ctx) {
+		var coupon types.Coupon
+		if err := cursor.Decode(&coupon); err != nil {
+			return nil, err
+		}
+		coupons = append(coupons, coupon)
+	}
+
+	return coupons, nil
+}
 
 func (s *MongoCouponStore) CreateCoupon(ctx context.Context, coupon types.CreateCouponParams) (*types.Coupon, error) {
 
@@ -91,9 +112,9 @@ func (s *MongoCouponStore) CreateCoupon(ctx context.Context, coupon types.Create
 
 	return &types.Coupon{
 		ID:          result.InsertedID.(primitive.ObjectID),
-        Name:        coupon.Name,
+		Type: 		 coupon.Type,
+		Details: coupon.Details,
         Description: coupon.Description,
-        Discount:    coupon.Discount,
         CreatedAt:   coupon.CreatedAt,
         ModifiedAt:  coupon.ModifiedAt,
 	}, nil

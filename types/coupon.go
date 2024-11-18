@@ -9,18 +9,32 @@ import (
 // Coupon represents a coupon document in the database.
 type Coupon struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id"`
-	Name        string             `json:"name" bson:"name"`
+	Type string `json:"type" bson:"type"`
+	Details CouponDetails `json:"details" bson:"details"`
 	Description string             `json:"description" bson:"description"`
-	Discount    float64            `json:"discount" bson:"discount"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
+type CouponDetails struct {
+	Discount  float64 `json:"discount"`
+	Threshold float64 `json:"threshold"`
+	ProductID int `json:"product_id" bson:"product_id"`
+	RepetitionLimit int `json:"repetition_limit" bson:"repetition_limit"`
+	BuyProducts []ProductQuantity `json:"buy_products" bson:"buy_products"`
+	GuyProducts []ProductQuantity `json:"get_products" bson:"get_products"`
+}
+
+type ProductQuantity struct {
+    ProductID int `json:"product_id" bson:"product_id"`
+    Quantity  int `json:"quantity"`
+}
+
 // CreateCouponParams is used to parse request data for creating a coupon.
 type CreateCouponParams struct {
-	Name        string  `json:"name" validate:"required"`
+	Type string `json:"type" bson:"type"`
 	Description string  `json:"description" validate:"required"`
-	Discount    float64 `json:"discount" validate:"required"`
+	Details CouponDetails `json:"details" bson:"details"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
@@ -33,12 +47,22 @@ type UpdateCouponParams struct {
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
-// CouponResponse is the structure returned in the API response for a coupon.
-type CouponResponse struct {
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Discount    float64 `json:"discount"`
-	CreatedAt   string  `json:"created_at"`
-	ModifiedAt  string  `json:"modified_at"`
+type Cart struct {
+	Cart CartData `json:"cart" bson:"cart"`
+}
+
+type CartData struct {
+    Items []CartItem `json:"items" bson:"items"`
+}
+type CartItem struct {
+	ProductID int     `json:"product_id"`
+	Quantity  int     `json:"quantity"`
+	Price     float64 `json:"price"`
+	TotalDiscount float64 `json:"total_discount" bson:"total_discount"`
+}
+
+type ApplicableCoupon struct {
+	CouponID string  `json:"coupon_id"`
+	Type     string  `json:"type"`
+	Discount float64 `json:"discount"`
 }
