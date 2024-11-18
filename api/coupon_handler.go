@@ -91,7 +91,6 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 		totalCartValue += float64(item.Quantity) * item.Price
 	}
 
-	// Fetch all cart-wise coupons
 	coupons, err := h.store.Coupon.GetCouponsByType(c.Context(), "cart-wise")
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
@@ -99,10 +98,9 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 		})
 	}
 
-	// Find applicable coupons
 	var applicableCoupons []types.ApplicableCoupon
 	if len(coupons) > 0 {
-    coupon := coupons[0] // Get the first coupon
+    coupon := coupons[0]
 
     threshold := coupon.Details.Threshold
     discount := coupon.Details.Discount
@@ -125,16 +123,12 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 		})
 	}
 
-	// Find applicable product-wise coupons
 	for _, coupon := range productCoupons {
 
-		// Check if the coupon applies to any item in the cart
 		for _, item := range req.Cart.Items {
 			if item.ProductID == coupon.Details.ProductID {
-				// Calculate the discount amount based on the quantity and discount
 				discountAmount := (float64(item.Quantity) * item.Price * coupon.Details.Discount) / 100
 
-				// Add the applicable product-wise coupon to the response
 				applicableCoupons = append(applicableCoupons, types.ApplicableCoupon{
 					CouponID: coupon.ID.Hex(),
 					Type:     coupon.Type,
@@ -151,14 +145,11 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 		})
 	}
 
-	// Find applicable bxgy coupons
 	for _, coupon := range bxgyCoupons {
-		// Extract details from the coupon
 		buyProducts := coupon.Details.BuyProducts
 		getProducts := coupon.Details.GuyProducts
 		repetitionLimit := coupon.Details.RepetitionLimit
 
-		// Calculate how many times the coupon can be applied based on the cart's product quantities
 		var totalBuyQuantity int
 		for _, buyProduct := range buyProducts {
 			for _, item := range req.Cart.Items {
@@ -168,28 +159,23 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 			}
 		}
 
-		// Calculate the possible repetitions of the coupon
-		repetitions := totalBuyQuantity / buyProducts[0].Quantity // Use the first item in the buyProducts array
+		repetitions := totalBuyQuantity / buyProducts[0].Quantity
 		if repetitions > repetitionLimit {
 			repetitions = repetitionLimit
 		}
 
-		// Apply the coupon if it can be applied
 		if repetitions > 0 {
 			var discountAmount float64
-			// For each repetition, calculate the discount for the free products
 			for i := 0; i < repetitions; i++ {
 				for _, getProduct := range getProducts {
 					for _, item := range req.Cart.Items {
 						if item.ProductID == getProduct.ProductID {
-							// Add the price of the free product to the discount
 							discountAmount += float64(getProduct.Quantity) * item.Price
 						}
 					}
 				}
 			}
 
-			// Add the applicable BxGy coupon to the response
 			applicableCoupons = append(applicableCoupons, types.ApplicableCoupon{
 				CouponID: coupon.ID.Hex(),
 				Type:     coupon.Type,
@@ -213,7 +199,6 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 		})
 	}
 
-	// Fetch the coupon by ID
 	coupon, err := h.store.Coupon.GetCouponByID(c.Context(), couponID)
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
@@ -221,19 +206,14 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 		})
 	}
 
-	// Initialize total discount and final cart price
 	var totalDiscount float64
 	var finalPrice float64
 	for _, item := range req.Cart.Items {
 		finalPrice += float64(item.Quantity) * item.Price
 	}
 
-	// Apply the coupon based on its type
 	switch coupon.Type {
 	case "cart-wise":
-		// For cart-wise coupon, check if the threshold is met and apply the discount
-
-		// If the total cart value exceeds the threshold, apply the discount
 		if coupon.Details.Threshold <= finalPrice {
 			discountAmount := (finalPrice * coupon.Details.Discount) / 100
 			totalDiscount += discountAmount
@@ -241,26 +221,21 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 		}
 
 	case "product-wise":
-		// Apply discount to the product if it exists in the cart
 		for i, item := range req.Cart.Items {
 			if item.ProductID == coupon.Details.ProductID {
-				// Calculate the discount on the total price (quantity * price)
 				discountAmount := (float64(item.Quantity) * item.Price * coupon.Details.Discount) / 100
 				req.Cart.Items[i].TotalDiscount = discountAmount
-				// Subtract the discount amount from the total price of the item
-				req.Cart.Items[i].Price -= (discountAmount / float64(item.Quantity)) // Adjust price per item
+				req.Cart.Items[i].Price -= (discountAmount / float64(item.Quantity)) 
 				totalDiscount += discountAmount
 				finalPrice -= discountAmount
 			}
 		}
 
 	case "bxgy":
-		// For BxGy (Buy X Get Y) coupon, apply based on the buy and get products
 		buyProducts := coupon.Details.BuyProducts
 		getProducts := coupon.Details.GuyProducts
 		repetitionLimit := coupon.Details.RepetitionLimit
 
-		// Calculate how many times the coupon can be applied based on the cart's product quantities
 		var totalBuyQuantity int
 		for _, buyProduct := range buyProducts {
 			for _, item := range req.Cart.Items {
@@ -270,40 +245,33 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 			}
 		}
 
-		// Calculate the possible repetitions of the coupon
-		repetitions := totalBuyQuantity / buyProducts[0].Quantity // Use the first item in the buyProducts array
+		repetitions := totalBuyQuantity / buyProducts[0].Quantity
 		if repetitions > repetitionLimit {
 			repetitions = repetitionLimit
 		}
 
-		// Apply the coupon if it can be applied
 		if repetitions > 0 {
 			var discountAmount float64
-			// Update the quantity and discount for get products (free products)
 			for _, getProduct := range getProducts {
 				for i, item := range req.Cart.Items {
 					if item.ProductID == getProduct.ProductID {
-						// Calculate how many free products we can add
 						freeQuantity := getProduct.Quantity * repetitions
 						req.Cart.Items[i].Quantity += freeQuantity
-						// Add the price of the free product to the discount
 						discountAmount += float64(freeQuantity) * item.Price
 						req.Cart.Items[i].TotalDiscount = float64(freeQuantity) * item.Price
 					}
 				}
 			}
 
-			// Apply the discount and update the cart
 			totalDiscount += discountAmount
 			finalPrice -= discountAmount
 		}
 	}
 
-	// Return the updated cart with total price and total discount applied
 	return c.JSON(fiber.Map{
 		"updated_cart": fiber.Map{
 			"items": req.Cart.Items,
-			"total_price": finalPrice + totalDiscount, // Add total discount to get the final price
+			"total_price": finalPrice + totalDiscount,
 			"total_discount": totalDiscount,
 			"final_price": finalPrice,
 		},
