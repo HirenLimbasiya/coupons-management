@@ -23,6 +23,14 @@ func (h *CouponHandler) HandleCreateCoupon(c *fiber.Ctx) error {
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Bad request"})
 	}
+	if req.ExpiresAt.Before(time.Now()) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "ExpiresAt must be a future date",
+		})
+	}
+	req.Status = "Active"
+	req.CreatedAt = time.Now() 
+	req.ModifiedAt = time.Now()
 
 	coupon, err := h.store.Coupon.CreateCoupon(c.Context(), req)
 	if err != nil {
@@ -101,20 +109,21 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 	var applicableCoupons []types.ApplicableCoupon
 	if len(coupons) > 0 {
     coupon := coupons[0]
-
-    threshold := coupon.Details.Threshold
-    discount := coupon.Details.Discount
-
-        if threshold <= totalCartValue {
-            discountAmount := (totalCartValue * discount) / 100
-            applicableCoupons = append(applicableCoupons, types.ApplicableCoupon{
-                CouponID: coupon.ID.Hex(),
-                Type:     coupon.Type,
-                Discount: discountAmount,
-            })
-    
-    }
-}
+		if coupon.Status == "Active" && coupon.ExpiresAt.After(time.Now()) {
+			threshold := coupon.Details.Threshold
+			discount := coupon.Details.Discount
+		
+				if threshold <= totalCartValue {
+					discountAmount := (totalCartValue * discount) / 100
+					applicableCoupons = append(applicableCoupons, types.ApplicableCoupon{
+						CouponID: coupon.ID.Hex(),
+						Type:     coupon.Type,
+						Discount: discountAmount,
+					})
+			
+			}
+		}
+	}
 
 	productCoupons, err := h.store.Coupon.GetCouponsByType(c.Context(), "product-wise")
 	if err != nil {
@@ -124,7 +133,9 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 	}
 
 	for _, coupon := range productCoupons {
-
+		if coupon.Status == "Expired" || coupon.ExpiresAt.Before(time.Now()) {
+			continue 
+		}
 		for _, item := range req.Cart.Items {
 			if item.ProductID == coupon.Details.ProductID {
 				discountAmount := (float64(item.Quantity) * item.Price * coupon.Details.Discount) / 100
@@ -146,6 +157,9 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 	}
 
 	for _, coupon := range bxgyCoupons {
+		if coupon.Status == "Expired" || coupon.ExpiresAt.Before(time.Now()) {
+			continue 
+		}
 		buyProducts := coupon.Details.BuyProducts
 		getProducts := coupon.Details.GuyProducts
 		repetitionLimit := coupon.Details.RepetitionLimit
@@ -203,6 +217,12 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(fiber.Map{
 			"error": "Coupon not found",
+		})
+	}
+
+	if coupon.Status == "Expired" || coupon.ExpiresAt.Before(time.Now()) {
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
+			"error": "Coupon has expired",
 		})
 	}
 

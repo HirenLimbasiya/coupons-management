@@ -13,6 +13,8 @@ type Coupon struct {
 	Description string             `json:"description" bson:"description"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
+	ExpiresAt   time.Time          `json:"expires_at" bson:"expires_at"`
+	Status      string             `json:"status" bson:"status"`
 }
 
 type CouponDetails struct {
@@ -33,6 +35,8 @@ type CreateCouponParams struct {
 	Type 		string 			   `json:"type" bson:"type"`
 	Description string  		   `json:"description" validate:"required"`
 	Details 	CouponDetails 	   `json:"details" bson:"details"`
+	ExpiresAt   time.Time          `json:"expires_at" bson:"expires_at"`
+	Status      string             `json:"status" bson:"status"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }

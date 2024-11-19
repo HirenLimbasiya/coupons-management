@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"coupons-management/types"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -102,9 +101,6 @@ func (s *MongoCouponStore) GetCouponsByType(ctx context.Context, couponType stri
 
 func (s *MongoCouponStore) CreateCoupon(ctx context.Context, coupon types.CreateCouponParams) (*types.Coupon, error) {
 
-	coupon.CreatedAt = time.Now()
-	coupon.ModifiedAt = time.Now()
-
 	result, err := s.collection.InsertOne(ctx, coupon)
 	if err != nil {
 		return nil, err
@@ -117,6 +113,8 @@ func (s *MongoCouponStore) CreateCoupon(ctx context.Context, coupon types.Create
         Description: coupon.Description,
         CreatedAt:   coupon.CreatedAt,
         ModifiedAt:  coupon.ModifiedAt,
+		Status:      coupon.Status,
+		ExpiresAt:   coupon.ExpiresAt,
 	}, nil
 }
 
