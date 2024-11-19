@@ -6,23 +6,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Coupon represents a coupon document in the database.
 type Coupon struct {
 	ID          primitive.ObjectID `json:"id" bson:"_id"`
-	Type string `json:"type" bson:"type"`
-	Details CouponDetails `json:"details" bson:"details"`
+	Type 		string 			   `json:"type" bson:"type"`
+	Details 	CouponDetails      `json:"details" bson:"details"`
 	Description string             `json:"description" bson:"description"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
 type CouponDetails struct {
-	Discount  float64 `json:"discount"`
-	Threshold float64 `json:"threshold"`
-	ProductID int `json:"product_id" bson:"product_id"`
-	RepetitionLimit int `json:"repetition_limit" bson:"repetition_limit"`
-	BuyProducts []ProductQuantity `json:"buy_products" bson:"buy_products"`
-	GuyProducts []ProductQuantity `json:"get_products" bson:"get_products"`
+	Discount  		float64 		  `json:"discount"`
+	Threshold 		float64 		  `json:"threshold"`
+	ProductID 		int 			  `json:"product_id" bson:"product_id"`
+	RepetitionLimit int 			  `json:"repetition_limit" bson:"repetition_limit"`
+	BuyProducts 	[]ProductQuantity `json:"buy_products" bson:"buy_products"`
+	GuyProducts 	[]ProductQuantity `json:"get_products" bson:"get_products"`
 }
 
 type ProductQuantity struct {
@@ -30,20 +29,18 @@ type ProductQuantity struct {
     Quantity  int `json:"quantity"`
 }
 
-// CreateCouponParams is used to parse request data for creating a coupon.
 type CreateCouponParams struct {
-	Type string `json:"type" bson:"type"`
-	Description string  `json:"description" validate:"required"`
-	Details CouponDetails `json:"details" bson:"details"`
+	Type 		string 			   `json:"type" bson:"type"`
+	Description string  		   `json:"description" validate:"required"`
+	Details 	CouponDetails 	   `json:"details" bson:"details"`
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
-// UpdateCouponParams is used to parse request data for updating a coupon.
 type UpdateCouponParams struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Discount    float64 `json:"discount"`
+	Name        string  		   `json:"name"`
+	Description string  		   `json:"description"`
+	Discount    float64 		   `json:"discount"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
@@ -55,9 +52,9 @@ type CartData struct {
     Items []CartItem `json:"items" bson:"items"`
 }
 type CartItem struct {
-	ProductID int     `json:"product_id"`
-	Quantity  int     `json:"quantity"`
-	Price     float64 `json:"price"`
+	ProductID 	  int     `json:"product_id"`
+	Quantity  	  int     `json:"quantity"`
+	Price     	  float64 `json:"price"`
 	TotalDiscount float64 `json:"total_discount" bson:"total_discount"`
 }
 
