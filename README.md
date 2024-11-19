@@ -7,7 +7,7 @@ This project is a coupon management system built using Go, the Fiber framework, 
 ## Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/HirenLimbasiya/job-scheduler.git
+git clone https://github.com/HirenLimbasiya/coupons-management.git
 ```
 2. Install dependencies:
 ```bash
