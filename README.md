@@ -318,6 +318,9 @@ only one coupon allow at a time, stacking not allow
 - Support for Percentage Off Coupons
 - Coupon Prioritization
 - Discount on Shipping
+- One-time Use Coupons
+- User-Specific Coupons
+- Coupons for Specific Regions or Geographies
 
 ## Author
 
