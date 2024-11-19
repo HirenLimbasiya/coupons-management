@@ -43,7 +43,8 @@ Document all API endpoints with examples.
     "details": {
       "discount": 10,
       "threshold": 100
-    }
+    },
+    "expires_at": "2024-11-19T07:58:57.339+00:00"
 }
 ```
 - Response: 
@@ -62,7 +63,8 @@ Document all API endpoints with examples.
         },
         "description": "",
         "created_at": "2024-11-19T07:43:24.254419+05:30",
-        "modified_at": "2024-11-19T07:43:24.254419+05:30"
+        "modified_at": "2024-11-19T07:43:24.254419+05:30",
+        "expires_at": "2024-11-19T07:50:24.254419+05:30"
     }
   }
 ```
@@ -77,7 +79,8 @@ for type product-wise
     "details": {
       "product_id": 1,
       "discount": 20
-    }
+    },
+    "expires_at": "2024-11-19T07:50:24.254419+05:30"
   }
 ```
 for type bxgy
@@ -102,7 +105,8 @@ for type bxgy
         }
       ],
       "repition_limit": 2
-    }
+    },
+    "expires_at": "2024-11-19T07:50:24.254419+05:30"
   }
 ```
 
@@ -289,12 +293,18 @@ for type bxgy
     }
 }
 ```
+## Coupons Expiration
+coupons are checked for expiration both in real-time when applied to a cart and periodically through a cron job running at regular intervals.
 
+### Real-Time Expiration Check
+In this approach, coupons are checked for expiration when a user tries to apply a coupon during the checkout process.
+
+### Cron Job for Periodic Expiration Check
+The cron job periodically checks [Hourly] all coupons in the database and updates their status based on whether their ExpiresAt time has passed. This is implemented to ensure expired coupons are automatically marked as expired even if they haven't been used.
 ## Limitations
 - Coupon Validation:
 only one coupon allow at a time, stacking not allow
 - Only on cart-wise type allow if multiple than it consider first one
-- Dynamic coupon expiry not implemented yet 
 - The BXGY coupons have a repetition_limit which is respected in applying free products but may not handle complex scenarios well
 
 ## Edge Cases
@@ -303,7 +313,6 @@ only one coupon allow at a time, stacking not allow
 
 ## Possible Future Implementations
 - Support for Stacking Discounts
-- Coupon Expiry and Time Validation
 - Product wise coupon apply only certain quantity
 - Coupon Usage History
 - Support for Percentage Off Coupons
