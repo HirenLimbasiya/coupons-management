@@ -38,9 +38,8 @@ type CreateCouponParams struct {
 }
 
 type UpdateCouponParams struct {
-	Name        string  		   `json:"name"`
+	Details 	CouponDetails 	   `json:"details" bson:"details"`
 	Description string  		   `json:"description"`
-	Discount    float64 		   `json:"discount"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
 
