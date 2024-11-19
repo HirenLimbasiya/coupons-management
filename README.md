@@ -289,6 +289,27 @@ for type bxgy
     }
 }
 ```
+
+## Limitations
+- Coupon Validation:
+only one coupon allow at a time, stacking not allow
+- Only on cart-wise type allow if multiple than it consider first one
+- Dynamic coupon expiry not implemented yet 
+- The BXGY coupons have a repetition_limit which is respected in applying free products but may not handle complex scenarios well
+
+## Edge Cases
+- Negative Price after Discount
+- Product Quantities Not Matching the Coupon Requirement
+
+## Possible Future Implementations
+- Support for Stacking Discounts
+- Coupon Expiry and Time Validation
+- Product wise coupon apply only certain quantity
+- Coupon Usage History
+- Support for Percentage Off Coupons
+- Coupon Prioritization
+- Discount on Shipping
+
 ## Author
 
 This project is created and maintained by **Hiren Limbasiya**.
