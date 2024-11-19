@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,6 +29,11 @@ func (h *CouponHandler) HandleCreateCoupon(c *fiber.Ctx) error {
 			"error": "ExpiresAt must be a future date",
 		})
 	}
+
+	if err := validateCouponDetails(req.Details, req.Type); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	req.Status = "Active"
 	req.CreatedAt = time.Now() 
 	req.ModifiedAt = time.Now()
@@ -67,8 +73,17 @@ func (h *CouponHandler) HandleUpdateCoupon(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Bad request"})
 	}
 
+	coupon, err := h.store.Coupon.GetCouponByID(c.Context(), couponID)
+	if err != nil {
+		return c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Coupon not found"})
+	}
+
+	if err := validateCouponDetails(req.Details, coupon.Type); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	req.ModifiedAt = time.Now()
-	err := h.store.Coupon.UpdateCoupon(c.Context(), couponID, req)
+	err = h.store.Coupon.UpdateCoupon(c.Context(), couponID, req)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "Error updating coupon"})
 	}
@@ -161,7 +176,7 @@ func (h *CouponHandler) HandleGetApplicableCoupons(c *fiber.Ctx) error {
 			continue 
 		}
 		buyProducts := coupon.Details.BuyProducts
-		getProducts := coupon.Details.GuyProducts
+		getProducts := coupon.Details.GetProducts
 		repetitionLimit := coupon.Details.RepetitionLimit
 
 		var totalBuyQuantity int
@@ -253,7 +268,7 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 
 	case "bxgy":
 		buyProducts := coupon.Details.BuyProducts
-		getProducts := coupon.Details.GuyProducts
+		getProducts := coupon.Details.GetProducts
 		repetitionLimit := coupon.Details.RepetitionLimit
 
 		var totalBuyQuantity int
@@ -296,4 +311,27 @@ func (h *CouponHandler) HandleApplyCoupon(c *fiber.Ctx) error {
 			"final_price": finalPrice,
 		},
 	})
+}
+
+func validateCouponDetails(details types.CouponDetails, couponType string) error {
+	switch couponType {
+	case "cart-wise":
+		if details.Threshold == 0 || details.Discount == 0 {
+			return fmt.Errorf("for cart-wise type, both Threshold and Discount must be provided")
+		}
+
+	case "product-wise":
+		if details.ProductID == 0 || details.Discount == 0 {
+			return fmt.Errorf("for product-wise type, both ProductID and Discount must be provided")
+		}
+
+	case "bxgy":
+		if len(details.BuyProducts) == 0 || len(details.GetProducts) == 0 || details.RepetitionLimit == 0 {
+			return fmt.Errorf("for bxgy type, BuyProducts, GetProducts, and RepetitionLimit must be provided")
+		}
+
+	default:
+		return fmt.Errorf("invalid coupon type. Only 'cart-wise', 'product-wise', and 'bxgy' are allowed")
+	}
+	return nil
 }

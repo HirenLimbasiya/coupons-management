@@ -23,14 +23,8 @@ type CouponDetails struct {
 	ProductID 		int 			  `json:"product_id" bson:"product_id"`
 	RepetitionLimit int 			  `json:"repetition_limit" bson:"repetition_limit"`
 	BuyProducts 	[]ProductQuantity `json:"buy_products" bson:"buy_products"`
-	GuyProducts 	[]ProductQuantity `json:"get_products" bson:"get_products"`
+	GetProducts 	[]ProductQuantity `json:"get_products" bson:"get_products"`
 }
-
-type ProductQuantity struct {
-    ProductID int `json:"product_id" bson:"product_id"`
-    Quantity  int `json:"quantity"`
-}
-
 type CreateCouponParams struct {
 	Type 		string 			   `json:"type" bson:"type"`
 	Description string  		   `json:"description" validate:"required"`
@@ -40,6 +34,12 @@ type CreateCouponParams struct {
 	CreatedAt   time.Time          `json:"created_at" bson:"created_at"`
 	ModifiedAt  time.Time          `json:"modified_at" bson:"modified_at"`
 }
+
+type ProductQuantity struct {
+    ProductID int `json:"product_id" bson:"product_id"`
+    Quantity  int `json:"quantity"`
+}
+
 
 type UpdateCouponParams struct {
 	Details 	CouponDetails 	   `json:"details" bson:"details"`
