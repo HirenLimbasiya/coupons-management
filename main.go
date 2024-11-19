@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"coupons-management/api"
+	"coupons-management/cronjob"
 	"coupons-management/db"
 )
 
@@ -42,6 +43,9 @@ func main() {
 
 	app.Post("/applicable-coupons", couponHandler.HandleGetApplicableCoupons)
 	app.Post("/apply-coupon/:id", couponHandler.HandleApplyCoupon)
+
+	couponUpdater := &cronjob.CouponUpdater{Store: store}
+	cronjob.StartCouponCron(couponUpdater)
 
 	app.Listen(":" + port)
 }

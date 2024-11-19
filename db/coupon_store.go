@@ -20,6 +20,8 @@ type CouponStore interface {
 	UpdateCoupon(ctx context.Context, couponID string, coupon types.UpdateCouponParams) error
 	DeleteCoupon(ctx context.Context, couponID string) error
 	GetCouponsByType(ctx context.Context, couponID string) ([]types.Coupon, error)
+	GetActiveCoupons(ctx context.Context) ([]types.Coupon, error)
+	UpdateCouponStatus(ctx context.Context, couponID string, status string) error
 }
 
 func NewCouponStore(client *mongo.Client, dbName string) CouponStore {
@@ -147,5 +149,47 @@ func (s *MongoCouponStore) DeleteCoupon(ctx context.Context, couponID string) er
 	}
 
 	_, err = collection.DeleteOne(ctx, filter)
+	return err
+}
+func (s *MongoCouponStore) GetActiveCoupons(ctx context.Context) ([]types.Coupon, error) {
+	filter := bson.M{
+		"status":   "Active",
+	}
+	cursor, err := s.collection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var coupons []types.Coupon
+	for cursor.Next(ctx) {
+		var coupon types.Coupon
+		if err := cursor.Decode(&coupon); err != nil {
+			return nil, err
+		}
+		coupons = append(coupons, coupon)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return coupons, nil
+}
+func (s *MongoCouponStore) UpdateCouponStatus(ctx context.Context, couponID string, status string) error {
+	objectID, err := primitive.ObjectIDFromHex(couponID)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{
+		"_id": objectID,
+	}
+	update := bson.M{
+		"$set": bson.M{
+			"status": status,
+		},
+	}
+	_, err = s.collection.UpdateOne(ctx, filter, update)
 	return err
 }
