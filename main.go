@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -13,8 +15,15 @@ import (
 )
 
 func main() {
-	mongoEndpoint := "mongodb://localhost:27017"
-	dbName := "coupons-management"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+
+	mongoEndpoint := os.Getenv("MONGO_URL")
+	dbName := os.Getenv("DB_NAME")
+	port := os.Getenv("PORT")
+
 	store, err := NewStore(mongoEndpoint, dbName)
 	if err != nil {
 		log.Fatalf("Failed to create store: %v", err)
@@ -34,7 +43,7 @@ func main() {
 	app.Post("/applicable-coupons", couponHandler.HandleGetApplicableCoupons)
 	app.Post("/apply-coupon/:id", couponHandler.HandleApplyCoupon)
 
-	app.Listen(":2121")
+	app.Listen(":" + port)
 }
 
 func NewStore(mongoURI string, dbName string) (*db.Store, error) {
